@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react"
-import { Button, TimePicker } from "antd"
+import { Modal, Button, TimePicker, message } from "antd"
 import { CoffeeOutlined } from "@ant-design/icons"
 import moment from "moment"
 import imgSrc from "../assets/Work_from_home.jpg"
+import { sendData } from "../Apis"
 
 function AppClock() {
   const [showShiftStart, setshowShiftStart] = useState(false)
@@ -12,40 +13,46 @@ function AppClock() {
   const [timeEnd, settimeEnd] = useState()
   const [showEnd, setshowEnd] = useState(false)
   const [lunchBreak, setlunchBreak] = useState()
+  const [lunchBreakEnd, setlunchBreakEnd] = useState()
+  const [breakDuration, setbreakDuration] = useState()
   const [showDayReport, setshowDayReport] = useState(false)
   const [totalTime, settotalTime] = useState()
+  const [isModalVisible, setIsModalVisible] = useState(false)
 
-  const onChange = (time, timeString) => {
-    console.log(time)
-    console.log(moment(time).format("hh:mm"))
-    console.log(
-      "teyyyyyyy",
-      moment(new Date())
-        .format("hh:mm")
-        .diff(moment(time).format("hh:mm"), "hours"),
-    )
+  const user = JSON.parse(localStorage.getItem("user"))
+
+  const sendStartEndTimeBreak = async () => {
+    try {
+      await sendData(user.id, {
+        ...user,
+        start_time: timeStarted,
+        exit_time: timeEnd,
+        lunch_break: breakDuration,
+      })
+
+      message.success("User data saved successfully")
+    } catch (error) {
+      console.log(error.response)
+    }
+  }
+
+  const onChange = (time) => {
     settimeStarted(time.format("LT"))
   }
 
   const handleCheck = () => {
     setshowShiftStart(true)
     setdisableManual(true)
-    console.log(moment(new Date()).format("LT"))
     settimeStarted(moment(new Date()).format("LT"))
   }
 
   const handleCheckEnd = () => {
-    setdisableManualEnd(true)
-    console.log(moment(new Date()).format("LT"))
     settimeEnd(moment(new Date()).format("LT"))
+    setdisableManualEnd(true)
   }
 
-  const onChangeEnd = (time, timeString) => {
-    console.log(timeString)
-    console.log(moment(time).format("dddd"))
+  const onChangeEnd = (time) => {
     settimeEnd(time.format("LT"))
-    console.log(moment(time).format("h"))
-    console.log(moment(time).format("m"))
   }
 
   const confirmStart = () => {
@@ -54,31 +61,30 @@ function AppClock() {
 
   const handleBreak = () => {
     setlunchBreak(moment(new Date()).format("LT"))
-    console.log(moment(new Date()).format("LT"))
+    setIsModalVisible(true)
   }
-  //   const confirmEnd = () => {
-  //     settimeEnd()
-  //   }
+
+  const handleBreakEnd = () => {
+    setlunchBreakEnd(moment(new Date()).format("LT"))
+    setIsModalVisible(false)
+  }
 
   const endSchedule = () => {
+    setdisableManualEnd(true)
+  }
+
+  const handleShowReport = () => {
+    setbreakDuration(
+      moment(lunchBreakEnd, "hh:mm a").diff(
+        moment(lunchBreak, "hh:mm a"),
+        "minutes",
+      ),
+    )
+    settotalTime(
+      moment(timeEnd, "hh:mm a").diff(moment(timeStarted, "hh:mm a"), "hours"),
+    )
+    setdisableManualEnd(true)
     setshowDayReport(true)
-    console.log("start", timeStarted)
-    console.log("end", timeEnd)
-    const start = moment.duration(timeStarted)
-    const end = moment.duration(timeEnd)
-    console.log(start, end)
-    // settimeEnd(moment(new Date()).format("LT"))
-
-    console.log("helppp", end.subtract(start).asHours())
-
-    // const time = moment.duration(
-    //   moment(timeStarted)
-    //     .format("HH:mm:ss a")
-    //     .diff(moment(timeEnd).format("HH:mm:ss a")),
-    // )
-    console.log("plzzzzzzzz", moment(end).diff(moment(start), "hours"))
-    // const totaltime = timeEnd - timeStarted
-    // console.log(totaltime)
   }
 
   useEffect(() => {
@@ -133,17 +139,35 @@ function AppClock() {
       {showEnd && !showShiftStart && (
         <section className="clock_container">
           <h1 align="center">Welcome!</h1>
+          {!lunchBreakEnd && (
+            <Button icon={<CoffeeOutlined />} onClick={handleBreak}>
+              Take a lunch break
+            </Button>
+          )}
+          <Modal title="Lunch Break" visible={isModalVisible} footer={null}>
+            {lunchBreak && (
+              <>
+                <p align="center">Your break started at {lunchBreak}</p>
+                <Button type="primary" onClick={handleBreakEnd}>
+                  Stop break
+                </Button>
+              </>
+            )}
+          </Modal>
 
           <strong>Click to end your shift</strong>
 
-          <Button type="primary" onClick={handleCheckEnd}>
+          <Button
+            type="primary"
+            onClick={handleCheckEnd}
+            disabled={disableManualEnd}
+          >
             Check out
           </Button>
 
           <strong>Or Enter it manually:</strong>
           <div>
             <TimePicker
-              //   use12Hours
               format="h:mm"
               onChange={onChangeEnd}
               disabled={disableManualEnd}
@@ -156,25 +180,26 @@ function AppClock() {
               Confirm
             </Button>
           </div>
-          {/* <div> */}
-          {!lunchBreak && (
-            <Button icon={<CoffeeOutlined />} onClick={handleBreak}>
-              Take a lunch break
-            </Button>
-          )}
 
-          {lunchBreak && (
+          <Button type="primary" onClick={handleShowReport} disabled={!timeEnd}>
+            Show report
+          </Button>
+          {showDayReport && (
             <>
-              <p align="center">Your break started at {lunchBreak}</p>
-              <Button type="primary">Stop break</Button>
+              <p>Official Working hours: 8</p>
+              <p>You've worked today for {totalTime} hours!</p>
+              <p>
+                During which you took a lunch break that lasted{" "}
+                {breakDuration ? breakDuration : 0}
+                {"  "}
+                minutes
+              </p>
+              <p> Have a great rest of the day! ✨</p>
+              <Button onClick={sendStartEndTimeBreak} type="primary">
+                Save Today's Report
+              </Button>
             </>
           )}
-
-          {showDayReport && (
-            <>You've worked today for hours! Have a great rest of the day</>
-          )}
-
-          {/* </div> */}
         </section>
       )}
     </>

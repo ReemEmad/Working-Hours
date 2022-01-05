@@ -5,7 +5,7 @@ export const verifyUser = () => {
   return result
 }
 
-// export const verifyUser = (id) => {
-//   const result = axios.post(`http://localhost:8000/data/${id}`)
-//   return result
-// }
+export const sendData = (id, user) => {
+  const result = axios.put(`http://localhost:8000/data/${id}`, user)
+  return result
+}
