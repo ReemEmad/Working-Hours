@@ -5,17 +5,15 @@
       "first_name": "Sebastian",
       "last_name": "Eschweiler",
       "job_title": "FrontEnd developer",
-      "in_time": "false",
-      "start_time": "",
-      "exit_time": "",
-      "lunch_break": ""
+      "exit_time": "5:12 AM",
+      "lunch_break": 1,
+      "start_time": "3:34 AM"
     },
     {
       "id": 2,
       "first_name": "Steve",
       "last_name": "Palmer",
       "job_title": "Backend developer",
-      "in_time": "false",
       "start_time": "",
       "exit_time": "",
       "lunch_break": ""
@@ -25,7 +23,6 @@
       "first_name": "Ann",
       "last_name": "Smith",
       "job_title": "Graphic Designer",
-      "in_time": "false",
       "start_time": "",
       "exit_time": "",
       "lunch_break": ""
