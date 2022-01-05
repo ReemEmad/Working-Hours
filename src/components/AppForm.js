@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React from "react"
 import { Form, Input, Button, message } from "antd"
 import { verifyUser } from "../Apis"
 import { useNavigate } from "react-router-dom"
@@ -16,9 +16,13 @@ function AppForm() {
 
     const found = data.filter((i) => i.last_name === values.l_name)
 
-    if (found) {
+    if (found.length > 0) {
       message.success("Done")
       navigate("/clock")
+      localStorage.setItem("user", JSON.stringify(found[0]))
+    } else {
+      message.error("User doesn't exist")
+      form.resetFields()
     }
   }
 
